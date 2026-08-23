@@ -1,8 +1,12 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
+// 部署时通过 VITE_API_BASE 注入后端公网地址（如 Cloudflare 隧道 URL）；
+// 未配置时回退到同源 /api（本地开发或后端同源部署场景）。
+const API_BASE = import.meta.env.VITE_API_BASE || '/api'
+
 const service = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE,
   timeout: 15000
 })
 

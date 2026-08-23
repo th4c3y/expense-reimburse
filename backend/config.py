@@ -18,10 +18,16 @@ class Config:
     DB_PORT = os.environ.get("DB_PORT", "3306")
     DB_NAME = os.environ.get("DB_NAME", "expense_db")
 
-    SQLALCHEMY_DATABASE_URI = (
-        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-        f"?charset=utf8mb4"
-    )
+    # 演示/测试场景可设置 USE_SQLITE=1  fallback 到 SQLite，无需外部 MariaDB。
+    if os.environ.get("USE_SQLITE") in ("1", "true", "yes"):
+        DB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "database"))
+        os.makedirs(DB_DIR, exist_ok=True)
+        SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(DB_DIR, 'expense_demo.db')}"
+    else:
+        SQLALCHEMY_DATABASE_URI = (
+            f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+            f"?charset=utf8mb4"
+        )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = False
 

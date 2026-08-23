@@ -4,9 +4,14 @@ import { ElMessage } from 'element-plus'
 // 部署时通过 VITE_API_BASE 注入后端公网地址（如 Cloudflare 隧道 URL）；
 // 未配置时回退到同源 /api（本地开发或后端同源部署场景）。
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
+// 前端 src/api/*.js 中的接口路径都不带 /api 前缀（如 /auth/login），
+// 因此当 VITE_API_BASE 为完整后端域名时，需要自动补上 /api 路径前缀。
+const baseURL = API_BASE === '/api' || API_BASE.endsWith('/api')
+  ? API_BASE
+  : API_BASE.replace(/\/$/, '') + '/api'
 
 const service = axios.create({
-  baseURL: API_BASE,
+  baseURL,
   timeout: 15000
 })
 

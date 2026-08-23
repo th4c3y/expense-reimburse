@@ -89,22 +89,23 @@ def by_department():
 @stats_bp.route("/trend", methods=["GET"])
 @role_required("admin", "finance", "manager")
 def trend():
-    """近 6 个月报销金额趋势"""
+    """近 6 个月报销金额趋势（跨数据库兼容：在 Python 侧按月聚合，不依赖 SQL 日期函数）"""
     now = datetime.now()
+    # 取近 6 个月的已通过/已付款单据，全部载入后在内存中按月分组
+    sheets = ExpenseSheet.query.filter(
+        ExpenseSheet.status.in_(
+            [ExpenseSheet.STATUS_APPROVED, ExpenseSheet.STATUS_PAID]
+        )
+    ).all()
     result = []
     for i in range(5, -1, -1):
-        month = (now.month - i - 1) % 12 + 1
-        year = now.year - ((now.month - i - 1) < 0)
-        month_str = f"{year}-{str(month).zfill(2)}"
-        amount = (
-            db.session.query(func.coalesce(func.sum(ExpenseSheet.total_amount), 0))
-            .filter(
-                func.date_format(ExpenseSheet.created_at, "%Y-%m") == month_str,
-                ExpenseSheet.status.in_(
-                    [ExpenseSheet.STATUS_APPROVED, ExpenseSheet.STATUS_PAID]
-                ),
-            )
-            .scalar()
+        total = now.year * 12 + (now.month - 1) - i
+        year, month = divmod(total, 12)
+        month_str = f"{year}-{month + 1:02d}"
+        amount = sum(
+            float(s.total_amount)
+            for s in sheets
+            if s.created_at.strftime("%Y-%m") == month_str
         )
-        result.append({"month": month_str, "amount": float(amount)})
+        result.append({"month": month_str, "amount": round(amount, 2)})
     return success(result)

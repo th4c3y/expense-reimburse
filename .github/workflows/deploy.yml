@@ -30,10 +30,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build
-        # 设置 Pages base 路径（仓库名）与后端 API 地址
+        # 设置 Pages base 路径（仓库名）
+        # 后端 API 地址由仓库内 frontend/.env.production 的 VITE_API_BASE 注入
         env:
           VITE_PAGES_BASE: /${{ github.event.repository.name }}/
-          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
         run: npm run build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
